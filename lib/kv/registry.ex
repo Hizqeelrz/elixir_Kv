@@ -44,7 +44,9 @@ defmodule KV.Registry do
   """
 
   def init(:ok) do
-    {:ok, %{}}
+    names = %{}
+    refs = %{}
+    {:ok, {names, refs}}
   end
 
   @doc """
@@ -52,21 +54,38 @@ defmodule KV.Registry do
   Fetches the value for the specific key required
   """
 
-  def handle_call({:lookup, name}, _from, names) do
-    {:reply, Map.fetch(names, name), names}
+  def handle_call({:lookup, name}, _from, {names, _} = state) do
+    {:reply, Map.fetch(names, name), state}
   end
 
   @doc """
-  Handles the cast request with the current server state with `{:no_reply, new_state}`
+  Handles the cast request with the current server state with `{:noreply, new_state}`
   """
 
-  def handle_cast({:create, name}, names) do
+  def handle_cast({:create, name}, {names, refs}) do
     if Map.has_key?(names, name) do
-      {:noreply, names}
+      {:noreply, {names, refs}}
     else
-      {:ok, bucket} = KV.Bucket.start_link([])
-      {:noreply, Map.put(names, name, bucket)}
+      {:ok, pid} = KV.Bucket.start_link([])
+      ref = Process.monitor(pid)
+      refs = Map.put(refs, ref, name)
+      names = Map.put(names, name, pid)
+      {:noreply, {names, refs}}
     end
+  end
+
+  @doc """
+  used for all other messages, server receive that are not sent by GenServer `call/cast` and which are send by `sent/2` if not handled than cause our registry to crash
+  """
+
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, {names, refs}) do
+    {name, refs} = Map.pop(refs, ref)
+    names = Map.delete(names, name)
+    {:noreply, {names, refs}}
+  end
+
+  def handle_info(_msg, state) do
+    {:noreply, state}
   end
 
 end
