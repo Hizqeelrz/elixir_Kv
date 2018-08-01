@@ -1,8 +1,11 @@
 defmodule KV.BucketTest do
   use ExUnit.Case, async: true
 
+  # start_supervised is used that it guarantee that the process shutdown before the next test starts. i.e it helps of one test not to interfere with the other test
+
   setup do
-    {:ok, bucket} = KV.Bucket.start_link(fn -> %{} end)
+    bucket = start_supervised!(KV.Bucket)
+    # {:ok, bucket} = KV.Bucket.start_link(fn -> %{} end)
     %{bucket: bucket}
   end
 

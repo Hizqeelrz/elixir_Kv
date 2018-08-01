@@ -4,6 +4,14 @@ defmodule KV.Registry do
   # for Client API
 
   @doc """
+  Stops the registry for the GenServer
+  """
+
+  def stop(server) do
+    GenServer.stop(server)
+  end
+
+  @doc """
   Starts the registry for the GenServer
   """
 
@@ -14,7 +22,7 @@ defmodule KV.Registry do
   @doc """
   Look up for the name in the server, send the request to server and wait until response come
   This is Synchronous call
-  Returns `{:ok, pid}` if the name exist,`:error` ottherwise.
+  Returns `{:ok, pid}` if the name exist,`:error` otherwise.
   """
 
   def lookup(server, name) do
@@ -54,10 +62,10 @@ defmodule KV.Registry do
 
   def handle_cast({:create, name}, names) do
     if Map.has_key?(names, name) do
-      {:no_reply, names}
+      {:noreply, names}
     else
       {:ok, bucket} = KV.Bucket.start_link([])
-      {:no_reply, Map.put(names, name, bucket)}
+      {:noreply, Map.put(names, name, bucket)}
     end
   end
 
