@@ -20,6 +20,23 @@ defmodule KV.Bucket do
       Map.pop(pict, key)
     end)
   end
+
+  @doc """
+  Retrives all keys from the map
+  where bucket is the current Agent pid
+  """
+  def show_keys(bucket) do
+    Agent.get(bucket, fn all_keys -> Map.keys(all_keys) end)
+  end
+
+  @doc """
+  Retrives all values from the map
+  where bucket is the current Agent pid
+  """
+
+  def show_values(bucket) do
+    Agent.get(bucket, fn all_values -> Map.values(all_values) end)
+  end
 end
 
 # Map.get(fn {key,value} -> key)
