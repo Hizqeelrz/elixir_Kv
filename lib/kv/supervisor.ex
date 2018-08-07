@@ -10,10 +10,10 @@ defmodule KV.Supervisor do
   # i.e DynamicSupervisor.start_child(KV.BucketSupervisor, any_child_to_be_started)
   def init(:ok) do
     children = [
-      {KV.Registry, name: KV.Registry},
-      {DynamicSupervisor, name: KV.BucketSupervisor, strategy: :one_for_one}
+      {DynamicSupervisor, name: KV.BucketSupervisor, strategy: :one_for_one},
+      {KV.Registry, name: KV.Registry}
     ]
 
-    Supervisor.init(children, strategy: :one_for_one)
+    Supervisor.init(children, strategy: :one_for_all)
   end
 end
