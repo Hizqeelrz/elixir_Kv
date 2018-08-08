@@ -1,9 +1,11 @@
 defmodule KV.RegistryTest do
   use ExUnit.Case, async: true
 
-  setup do
-    registry = start_supervised!(KV.Registry)
-    %{registry: registry}
+  # registry require :name option as an argument instead of PID so startup changed
+
+  setup context do
+    _ = start_supervised!({KV.Registry, name: context.test})
+    %{registry: context.test}
   end
 
   test "spawns buckets", %{registry: registry} do
@@ -20,6 +22,9 @@ defmodule KV.RegistryTest do
     KV.Registry.create(registry, "shopping")
     {:ok, bucket} = KV.Registry.lookup(registry, "shopping")
     Agent.stop(bucket)
+
+    # ensures that registry processed with DOWN message
+    _ = KV.Registry.create(registry, "bogus")
     assert KV.Registry.lookup(registry, "shopping") == :error
   end
 
@@ -30,6 +35,8 @@ defmodule KV.RegistryTest do
     # Stops the bucket with non-normal(i.e :shutdown) reason
     # if process terminates otherthan :normal reason than all linked process EXIT
     Agent.stop(bucket, :shutdown)
+
+    _ = KV.Registry.create(registry, "bogus")
     # After stoping the process the linked process i.e GenServer.call/3 also stops
     assert KV.Registry.lookup(registry, "shopping") == :error
   end
